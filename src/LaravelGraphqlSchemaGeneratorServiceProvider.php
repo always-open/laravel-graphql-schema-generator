@@ -2,9 +2,9 @@
 
 namespace AlwaysOpen\LaravelGraphqlSchemaGenerator;
 
+use AlwaysOpen\LaravelGraphqlSchemaGenerator\Commands\LaravelGraphqlSchemaGeneratorCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use AlwaysOpen\LaravelGraphqlSchemaGenerator\Commands\LaravelGraphqlSchemaGeneratorCommand;
 
 class LaravelGraphqlSchemaGeneratorServiceProvider extends PackageServiceProvider
 {
