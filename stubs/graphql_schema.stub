@@ -1,0 +1,7 @@
+{CUSTOM_SCALAR_DEFINITIONS}
+
+interface Node {
+   id: ID!
+}
+
+{SCHEMA}

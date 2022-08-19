@@ -1,0 +1,72 @@
+{
+    "name": "always-open/laravel-graphql-schema-generator",
+    "description": "Generate GraphQL schema from existing Laravel models/database",
+    "keywords": [
+        "always-open",
+        "laravel",
+        "laravel-graphql-schema-generator"
+    ],
+    "homepage": "https://github.com/always-open/laravel-graphql-schema-generator",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Quentin Schmick",
+            "email": "qschmick@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "always-open/sidekick": "^4.0",
+        "spatie/laravel-package-tools": "^1.9.2",
+        "illuminate/contracts": "^9.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.0",
+        "nunomaduro/collision": "^6.0",
+        "nunomaduro/larastan": "^2.0.1",
+        "orchestra/testbench": "^7.0",
+        "pestphp/pest": "^1.21",
+        "pestphp/pest-plugin-laravel": "^1.1",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan-deprecation-rules": "^1.0",
+        "phpstan/phpstan-phpunit": "^1.0",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "AlwaysOpen\\LaravelGraphqlSchemaGenerator\\": "src",
+            "AlwaysOpen\\LaravelGraphqlSchemaGenerator\\Database\\Factories\\": "database/factories"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AlwaysOpen\\LaravelGraphqlSchemaGenerator\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/pest",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/pint"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "AlwaysOpen\\LaravelGraphqlSchemaGenerator\\LaravelGraphqlSchemaGeneratorServiceProvider"
+            ],
+            "aliases": {
+                "LaravelGraphqlSchemaGenerator": "AlwaysOpen\\LaravelGraphqlSchemaGenerator\\Facades\\LaravelGraphqlSchemaGenerator"
+            }
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

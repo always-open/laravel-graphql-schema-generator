@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: ./docker/Dockerfile
+      args:
+        WITH_XDEBUG: ${WITH_XDEBUG:-false}
+    volumes:
+      - ./:/var/www/app:delegated
+    image: laravel-graphql
+    container_name: laravel-graphql-app
+    restart: unless-stopped
+    working_dir: /var/www/app/
