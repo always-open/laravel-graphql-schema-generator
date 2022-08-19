@@ -1,0 +1,15 @@
+parameters:
+
+    paths:
+        - src
+
+    # The level 8 is the highest level
+    level: 5
+
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Container\\Container::getNamespace\(\)#'
+
+    excludes_analyse:
+        - ./*/*/FileToBeExcluded.php
+
+    checkMissingIterableValueType: false
