@@ -139,7 +139,7 @@ SCHEMA;
         $modelSearchInputTypeName = class_basename($model) . 'SearchInput';
         $modelSearchInputTypeDefinition = 'input ' . $modelSearchInputTypeName . ' {' . PHP_EOL;
 
-        foreach($modelTableColumns as $column) {
+        foreach ($modelTableColumns as $column) {
             $modelSearchInputTypeDefinition .= '    ' . $column->name . ': '
                 . $this->getFilterType($this->getColumnGraphType($column)) . PHP_EOL;
         }
@@ -284,7 +284,7 @@ SCHEMA;
                             $type = '[' . $type . ']';
                         }
 
-                        $type .= match(strtolower($relationshipType)) {
+                        $type .= match (strtolower($relationshipType)) {
                             'hasone', 'hasmany', 'belongsto', 'belongstomany', 'hasmanythrough' => ' @' . Str::camel($relationshipType),
                             default => '',
                         };
