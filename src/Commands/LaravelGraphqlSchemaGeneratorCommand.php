@@ -312,7 +312,7 @@ SCHEMA;
 
     public function getGraphQLDirectory(string $subdirectory = '') : string
     {
-        $file_path = config('laravel-graphql-schema-generator.model_path', app_path('../graphql'))
+        $file_path = config('laravel-graphql-schema-generator.schema_path', app_path('../graphql'))
             . ($subdirectory ? '/' . $subdirectory : '');
 
         if (! file_exists($file_path)) {
