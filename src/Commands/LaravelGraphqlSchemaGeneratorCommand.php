@@ -285,7 +285,7 @@ SCHEMA;
         $stored = File::put($file, str_replace(
             '{SCHEMA}',
             $schema,
-            file_get_contents(config('laravel-graphql-schema-generator.model_path', app_path('../stubs/graphql_schema.stub'))),
+            file_get_contents(config('laravel-graphql-schema-generator.model_stub', app_path('../stubs/graphql_schema.stub'))),
         ));
 
         if (false === $stored) {
