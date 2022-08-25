@@ -47,7 +47,7 @@ class LaravelGraphqlSchemaGeneratorCommand extends Command
     {
         $this->info('Building schema...');
 
-        $schema = implode(PHP_EOL, config('laravel-graphql-schema-generator.custom_scalar_definitions', []));
+        $schema = '';
 
         $this->getModels()
             ->merge($this->buildAdditionalModels())
@@ -121,17 +121,17 @@ type $modelType implements Node {
 SCHEMA;
 
             if ($this->option('include-queries')) {
-                $schema .= $this->buildGraphModelQuery($model);
+                $this->buildGraphModelQuery($model);
             }
         }
 
         return $schema;
     }
 
-    public function buildGraphModelQuery(Model $model) : string
+    public function buildGraphModelQuery(Model $model) : void
     {
         $query_search_properties = $this->arrayOption('additional-query-properties');
-        $querySchema = 'type Query {' . PHP_EOL;
+        $querySchema = '';
         $queries = [];
 
         $modelTableColumns = $this->getModelColumns($model);
@@ -163,18 +163,16 @@ SCHEMA;
                     }
 
                     $keyCount++;
-                    $queryDefinition .= $this->getColumnGraphType($found) . ($keyCount < $count ? ', ' : '');
+                    $queryDefinition .= $this->getColumnGraphType($found) . ' @where(operator: "=")' . ($keyCount < $count ? ', ' : '');
                 });
 
-                $querySchema .= $queryDefinition . '): ' . class_basename($model) . '!' . PHP_EOL;
+                $querySchema .= $queryDefinition . '): ' . class_basename($model) . ' @find' . PHP_EOL;
             });
 
-        $querySchema .= implode(PHP_EOL . '    ', $queries) . '}';
+        $querySchema .= implode(PHP_EOL . '    ', $queries);
 
         $graphql_file_name = Str::snake(class_basename($model)) . '_queries.graphql';
         $this->persistQuerySchema($querySchema, $graphql_file_name);
-
-        return PHP_EOL . PHP_EOL . "#import queries/{$graphql_file_name}" . PHP_EOL . PHP_EOL;
     }
 
     public function persistQuerySchema(string $querySchema, string $fileName)
@@ -282,9 +280,26 @@ SCHEMA;
 
         $file = $this->getGraphQLDirectory() . '/schema.graphql';
 
+        $customerScalarTypes = implode(PHP_EOL, config('laravel-graphql-schema-generator.custom_scalar_definitions', []));
+
+        $queryImport = '';
+        if ($this->option('include-queries')) {
+            $queryImport = 'type Query {
+#import queries/*.graphql
+}';
+        }
+
         $stored = File::put($file, str_replace(
-            '{SCHEMA}',
-            $schema,
+            [
+                '{CUSTOM_SCALAR_DEFINITIONS}',
+                '{SCHEMA}',
+                '{QUERY_IMPORT}',
+            ] ,
+            [
+                $customerScalarTypes,
+                $schema,
+                $queryImport,
+            ],
             file_get_contents(config('laravel-graphql-schema-generator.model_stub', app_path('../stubs/graphql_schema.stub'))),
         ));
 
