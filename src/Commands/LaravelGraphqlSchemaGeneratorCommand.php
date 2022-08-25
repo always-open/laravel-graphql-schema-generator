@@ -294,7 +294,7 @@ SCHEMA;
                 '{CUSTOM_SCALAR_DEFINITIONS}',
                 '{SCHEMA}',
                 '{QUERY_IMPORT}',
-            ] ,
+            ],
             [
                 $customerScalarTypes,
                 $schema,
