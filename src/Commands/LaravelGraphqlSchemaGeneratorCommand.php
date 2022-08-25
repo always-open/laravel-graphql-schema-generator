@@ -131,28 +131,20 @@ SCHEMA;
     public function buildGraphModelQuery(Model $model) : void
     {
         $querySearchProperties = $this->arrayOption('additional-query-properties');
-        $querySchema = 'extend type Query {';
+        $querySchema = 'extend type Query {' . PHP_EOL;
         $queries = [];
 
         $modelTableColumns = $this->getModelColumns($model);
 
-        $modelSearchInputTypeName = class_basename($model) . 'SearchInput';
-        $modelSearchInputTypeDefinition = 'input ' . $modelSearchInputTypeName . ' {' . PHP_EOL;
-
-        foreach($modelTableColumns as $column) {
-            $modelSearchInputTypeDefinition .= '    ' . $column->name . ': '
-                . $this->getFilterType($this->getColumnGraphType($column)) . PHP_EOL;
-        }
-
-        $modelSearchInputTypeDefinition .= '}' . PHP_EOL;
+        $modelBaseName = class_basename($model);
 
         collect(DB::select('SHOW INDEX FROM ' . $model->getTable()))
             ->filter(function (\stdClass $index) use ($querySearchProperties) {
                 return ! $index->Non_unique || in_array($index->Column_name, $querySearchProperties);
             })
             ->groupBy('Key_name')
-            ->each(function (Collection $keys) use ($model, $modelTableColumns, &$querySchema) {
-                $queryDefinition = 'find' . class_basename($model) . 'By' . $keys->pluck('Column_name')
+            ->each(function (Collection $keys) use ($model, $modelTableColumns, &$querySchema, $modelBaseName) {
+                $queryDefinition = "find{$modelBaseName}By" . $keys->pluck('Column_name')
                         ->map(function ($name) {
                             return Str::studly($name);
                         })
@@ -176,14 +168,21 @@ SCHEMA;
                     $queryDefinition .= $this->getColumnGraphTypeDefinition($found) . ' @where(operator: "=")' . ($keyCount < $count ? ', ' : '');
                 });
 
-                $querySchema .= $queryDefinition . '): ' . class_basename($model) . ' @find' . PHP_EOL;
+                $querySchema .= $queryDefinition . "): {$modelBaseName} @find" . PHP_EOL;
             });
 
-        $querySchema .= implode(PHP_EOL . '    ', $queries) . '}';
+        $fields = [];
+        foreach ($modelTableColumns AS $column) {
+            $fields[] = $column->Field;
+        }
 
-        $querySchema .= PHP_EOL . PHP_EOL . $modelSearchInputTypeDefinition;
+        $queries[] = "search{$modelBaseName} (searchBy: _ @whereConditions(columns: [\""
+            . implode('", "', $fields)
+            . "\"])): [{$modelBaseName}] @all";
 
-        $graphql_file_name = Str::snake(class_basename($model)) . '_queries.graphql';
+        $querySchema .= PHP_EOL . implode(PHP_EOL . '    ', $queries) . PHP_EOL . '}';
+
+        $graphql_file_name = Str::snake($modelBaseName) . '_queries.graphql';
         $this->persistQuerySchema($querySchema, $graphql_file_name);
     }
 
@@ -284,7 +283,7 @@ SCHEMA;
                             $type = '[' . $type . ']';
                         }
 
-                        $type .= match(strtolower($relationshipType)) {
+                        $relation = match(strtolower($relationshipType)) {
                             'hasone', 'hasmany', 'belongsto', 'belongstomany', 'hasmanythrough' => ' @' . Str::camel($relationshipType),
                             default => '',
                         };
@@ -294,7 +293,7 @@ SCHEMA;
                         if (str_starts_with($relationshipType, 'Belongs')) {
                             $nullable = '!';
                         }
-                        $relationships[] = $method->getName() . ': ' . $type . $nullable;
+                        $relationships[] = $method->getName() . ': ' . $type . $nullable . $relation;
                     }
                 }
             } catch (\ErrorException $e) {
@@ -311,13 +310,10 @@ SCHEMA;
         $file = $this->getGraphQLDirectory() . '/schema.graphql';
 
         $customerScalarTypes = implode(PHP_EOL, config('laravel-graphql-schema-generator.custom_scalar_definitions', []));
-        $customerInputFilters = implode(PHP_EOL, config('laravel-graphql-schema-generator.custom_input_definitions', []));
 
         $queryImport = '';
         if ($this->option('include-queries')) {
-            $queryImport = 'type Query { }
-#import queries/*.graphql
-';
+            $queryImport = '#import queries/*.graphql' . PHP_EOL;
         }
 
         $stored = File::put($file, str_replace(
@@ -325,13 +321,11 @@ SCHEMA;
                 '{CUSTOM_SCALAR_DEFINITIONS}',
                 '{SCHEMA}',
                 '{QUERY_IMPORT}',
-                '{CUSTOM_INPUT_DEFINITIONS}',
             ],
             [
                 $customerScalarTypes,
                 $schema,
                 $queryImport,
-                $customerInputFilters,
             ],
             file_get_contents(config('laravel-graphql-schema-generator.model_stub', app_path('../stubs/graphql_schema.stub'))),
         ));
