@@ -172,7 +172,7 @@ SCHEMA;
             });
 
         $fields = [];
-        foreach ($modelTableColumns AS $column) {
+        foreach ($modelTableColumns as $column) {
             $fields[] = $column->Field;
         }
 
@@ -283,7 +283,7 @@ SCHEMA;
                             $type = '[' . $type . ']';
                         }
 
-                        $relation = match(strtolower($relationshipType)) {
+                        $relation = match (strtolower($relationshipType)) {
                             'hasone', 'hasmany', 'belongsto', 'belongstomany', 'hasmanythrough' => ' @' . Str::camel($relationshipType),
                             default => '',
                         };
