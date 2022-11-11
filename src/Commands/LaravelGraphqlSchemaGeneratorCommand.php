@@ -107,6 +107,7 @@ class LaravelGraphqlSchemaGeneratorCommand extends Command
     {
         $schema = '';
 
+        $cacheable_models = config('laravel-graphql-schema-generator.cacheable_models', []);
         if (Schema::hasTable($model->getTable())) {
             $modelType = class_basename($model);
 
@@ -121,15 +122,25 @@ type $modelType implements Node {
 SCHEMA;
 
             if ($this->option('include-queries')) {
-                $this->buildGraphModelQuery($model);
+                $full_model_name = get_class($model);
+
+                $cacheable_options = $cacheable_models[$full_model_name] ?? null;
+
+                if (str_starts_with($full_model_name, '\\')) {
+                    $full_model_name = substr($full_model_name, 1);
+                    $cacheable_options = $cacheable_models[$full_model_name] ?? null;
+                }
+
+                $this->buildGraphModelQuery($model, $cacheable_options);
             }
         }
 
         return $schema;
     }
 
-    public function buildGraphModelQuery(Model $model) : void
+    public function buildGraphModelQuery(Model $model, array|null $cacheableOptions = null) : void
     {
+        $is_cacheable = $cacheableOptions !== null;
         $querySearchProperties = $this->arrayOption('additional-query-properties');
         $querySchema = 'extend type Query {' . PHP_EOL;
         $queries = [];
@@ -176,9 +187,33 @@ SCHEMA;
             $fields[] = $column->Field;
         }
 
-        $queries[] = "search{$modelBaseName} (searchBy: _ @whereConditions(columns: [\""
+        $querySignature = "search{$modelBaseName} (searchBy: _ @whereConditions(columns: [\""
             . implode('", "', $fields)
             . "\"])): [{$modelBaseName}] @all";
+
+        if ($is_cacheable) {
+            $querySignature .= " @cache";
+            $is_private = $cacheableOptions['user_specific'] ?? null;
+            $max_cache_seconds = $cacheableOptions['max_cache_seconds'] ?? null;
+
+            if (null !== $is_private || null !== $max_cache_seconds) {
+                $querySignature .= '(';
+                if (null !== $is_private) {
+                    $querySignature .= 'private: true';
+                }
+
+                if (null !== $is_private && null !== $max_cache_seconds) {
+                    $querySignature .= ', ';
+                }
+
+                if (null !== $max_cache_seconds) {
+                    $querySignature .= 'maxAge: ' . (int) $max_cache_seconds;
+                }
+                $querySignature .= ') ';
+            }
+        }
+
+        $queries[] = $querySignature;
 
         $querySchema .= PHP_EOL . implode(PHP_EOL . '    ', $queries) . PHP_EOL . '}';
 

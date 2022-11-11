@@ -17,4 +17,11 @@ return [
     'model_stub' => __DIR__ . '/../stubs/graphql_schema.stub',
 
     'schema_path' => app_path('../graphql'),
+
+    'cacheable_models' => [
+//        'App\\Models\\User' => [
+//            'user_specific'     => false, // If true the cache is specific to the user
+//            'max_cache_seconds' => 60,
+//        ],
+    ],
 ];
